@@ -37,7 +37,15 @@ class DoingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initClicks()
         getTasks()
+    }
+    private fun initClicks() {
+        binding.fabAddDoing.setOnClickListener {
+            val action = HomeFragmentDirections
+                .actionHomeFragmentToFormTaskFragment(null)
+            findNavController().navigate(action)
+        }
     }
 
     private fun getTasks() {

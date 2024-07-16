@@ -41,6 +41,9 @@ class HomeFragment : Fragment() {
         }
     }
 
+
+
+
     private fun logoutapp() {
         auth.signOut()
         findNavController().navigate(R.id.action_homeFragment_to_authetication)

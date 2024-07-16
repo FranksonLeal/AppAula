@@ -10,8 +10,8 @@ import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import com.example.task.R
 import com.example.task.databinding.FragmentFormTaskBinding
-import com.example.task.model.Task
 import com.example.task.helper.FirebaseHelper
+import com.example.task.model.Task
 import com.google.android.material.radiobutton.MaterialRadioButton
 
 class FormTaskFragment : Fragment() {
@@ -29,12 +29,6 @@ class FormTaskFragment : Fragment() {
     ): View {
         _binding = FragmentFormTaskBinding.inflate(inflater, container, false)
         return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupToolbar()
-        initListeners()
     }
 
     private fun setupToolbar() {
@@ -60,15 +54,6 @@ class FormTaskFragment : Fragment() {
         }
     }
 
-    private fun validateTask() {
-        newTask = false
-        statusTask = task.status
-        binding.textToolbar.text = getString(R.string.text_editing_task_form_task_fragment)
-
-        binding.editDescription.setText(task.description)
-        setStatus()
-    }
-
     private fun setStatus() {
         binding.radioGroup.check(
             when (task.status) {
@@ -86,7 +71,9 @@ class FormTaskFragment : Fragment() {
             hideKeyboard()
             binding.progressBar.isVisible = true
 
-            if (newTask) task = Task()
+            if (newTask) {
+                task = Task()
+            }
             task.description = description
             task.status = statusTask
 
@@ -96,40 +83,97 @@ class FormTaskFragment : Fragment() {
         }
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupToolbar()
+        initListeners()
+
+        // Verifica se estamos editando uma tarefa existente
+        val args = FormTaskFragmentArgs.fromBundle(requireArguments())
+        if (args.task != null) {
+            task = args.task!!
+            newTask = false
+            validateTask()
+        } else {
+            newTask = true
+            task = Task() // Inicializa uma nova tarefa vazia
+        }
+    }
+
+
     private fun saveTask() {
-        FirebaseHelper
-            .getDatabase()
-            .child("task")
-            .child(FirebaseHelper.getIdUser() ?: "")
-            .child(task.id)
-            .setValue(task)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    if (newTask) { // Nova tarefa
+        if (newTask) {
+            task.id = FirebaseHelper.getDatabase()
+                .child("task")
+                .child(FirebaseHelper.getIdUser() ?: "")
+                .push().key ?: ""
+
+            FirebaseHelper.getDatabase()
+                .child("task")
+                .child(FirebaseHelper.getIdUser() ?: "")
+                .child(task.id)
+                .setValue(task)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
                         findNavController().popBackStack()
                         Toast.makeText(
                             requireContext(),
                             R.string.text_save_task_sucess_form_task_fragment,
                             Toast.LENGTH_SHORT
                         ).show()
-                    } else { // Editando tarefa
+                    } else {
+                        binding.progressBar.isVisible = false
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.text_erro_save_task_form_task_fragment,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }.addOnFailureListener {
+                    binding.progressBar.isVisible = false
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.text_erro_save_task_form_task_fragment,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        } else {
+            FirebaseHelper.getDatabase()
+                .child("task")
+                .child(FirebaseHelper.getIdUser() ?: "")
+                .child(task.id ?: "")
+                .setValue(task)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
                         binding.progressBar.isVisible = false
                         Toast.makeText(
                             requireContext(),
                             R.string.text_update_task_sucess_form_task_fragment,
                             Toast.LENGTH_SHORT
                         ).show()
+                    } else {
+                        binding.progressBar.isVisible = false
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.text_erro_save_task_form_task_fragment,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                } else {
+                }.addOnFailureListener {
                     binding.progressBar.isVisible = false
-                    Toast.makeText(requireContext(), R.string.text_erro_save_task_form_task_fragment, Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.text_erro_save_task_form_task_fragment,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-            }.addOnFailureListener {
-                binding.progressBar.isVisible = false
-                Toast.makeText(requireContext(), R.string.text_erro_save_task_form_task_fragment, Toast.LENGTH_SHORT)
-                    .show()
-            }
+        }
+    }
+
+    private fun validateTask() {
+        binding.textToolbar.text = getString(R.string.text_editing_task_form_task_fragment)
+        binding.editDescription.setText(task.description)
+        setStatus()
     }
 
     private fun hideKeyboard() {

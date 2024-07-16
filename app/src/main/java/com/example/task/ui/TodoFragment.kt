@@ -24,7 +24,6 @@ class TodoFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var taskAdapter: TaskAdapter
-
     private val taskList = mutableListOf<Task>()
 
     override fun onCreateView(
@@ -44,14 +43,15 @@ class TodoFragment : Fragment() {
 
     private fun initClicks() {
         binding.fabAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_formTaskFragment)
+            val action = HomeFragmentDirections
+                .actionHomeFragmentToFormTaskFragment(null)
+            findNavController().navigate(action)
         }
     }
 
     private fun getTasks() {
         binding.progressbar.isVisible = true
-        FirebaseHelper
-            .getDatabase()
+        FirebaseHelper.getDatabase()
             .child("task")
             .child(FirebaseHelper.getIdUser() ?: "")
             .addValueEventListener(object : ValueEventListener {
@@ -99,9 +99,11 @@ class TodoFragment : Fragment() {
                 deleteTask(task)
             }
             TaskAdapter.SELECT_EDIT -> {
-                val action = HomeFragmentDirections.actionHomeFragmentToFormTaskFragment(task)
+                val action = HomeFragmentDirections
+                    .actionHomeFragmentToFormTaskFragment(task)
                 findNavController().navigate(action)
             }
+
             TaskAdapter.SELECT_NEXT -> {
                 task.status = 1
                 updateTask(task)
@@ -109,38 +111,22 @@ class TodoFragment : Fragment() {
         }
     }
 
-    private fun updateTask(task: Task) {
-        FirebaseHelper
-            .getDatabase()
-            .child("task")
-            .child(FirebaseHelper.getIdUser() ?: "")
-            .child(task.id)
-            .setValue(task)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.text_task_update_success,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    showBottomSheet(message = R.string.error_generic)
-                }
-            }.addOnFailureListener {
-                binding.progressbar.isVisible = false
-                showBottomSheet(message = R.string.error_generic)
-            }
-    }
-
     private fun deleteTask(task: Task) {
-        FirebaseHelper
-            .getDatabase()
+        FirebaseHelper.getDatabase()
             .child("task")
             .child(FirebaseHelper.getIdUser() ?: "")
             .child(task.id)
             .removeValue()
         taskList.remove(task)
         taskAdapter.notifyDataSetChanged()
+    }
+
+    private fun updateTask(task: Task) {
+        FirebaseHelper.getDatabase()
+            .child("task")
+            .child(FirebaseHelper.getIdUser() ?: "")
+            .child(task.id)
+            .setValue(task)
     }
 
     private fun showBottomSheet(message: Int) {
