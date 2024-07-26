@@ -8,10 +8,6 @@ Este é um aplicativo de gerenciador de tarefas desenvolvido no android studio u
 
 ## 🛠️ Instalação e configurações
 
-Utilização do firebase
-- Realtime database: Cadastro, exclusão, edição e visualização das tarefas cadastradas
-- Firebase authentication: Cadastro o usuário, login, recuperação de senha e autenticação no app por meio de login e senha.
-
 1. **Faça um projeto no firebase**  
    Certifique-se de adicionar o pacote criado no banco no seu projeto.
 
